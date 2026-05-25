@@ -1,15 +1,21 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #07111f;
+  --foreground: #eef7ff;
+  --font-geist-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --surface: rgba(13, 28, 46, 0.86);
+  --surface-strong: #0d1c2e;
+  --surface-soft: rgba(158, 208, 255, 0.08);
+  --border: rgba(158, 208, 255, 0.16);
+  --primary: #62a8ff;
+  --primary-strong: #0759c9;
+  --accent: #37d5ff;
+  --muted: #9fb7d0;
+  --success: #8ff7c0;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+  --page-glow:
+    radial-gradient(circle at 18% 18%, rgba(55, 213, 255, 0.18), transparent 30%),
+    radial-gradient(circle at 82% 12%, rgba(98, 168, 255, 0.2), transparent 28%),
+    linear-gradient(135deg, rgba(7, 17, 31, 0.98), rgba(8, 32, 58, 0.96));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,7 +26,18 @@
 }
 
 body {
+  min-height: 100vh;
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
