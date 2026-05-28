@@ -14,11 +14,13 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the URL configured in `NEXT_PUBLIC_APP_URL` in your browser. By default that is [http://localhost:3000](http://localhost:3000).
 
 ## Backend API
 
-Create a `.env` file from `.env.example`, then install dependencies and prepare Prisma:
+Create a `.env` file from `.env.example`, then adjust ports and URLs there if needed. The main variables are `APP_PORT`, `API_PORT`, `DB_PORT`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_URL`, `CORS_ORIGIN`, `PASSWORD_RECOVERY_URL`, and `DATABASE_URL`.
+
+After that, install dependencies and prepare Prisma:
 
 ```bash
 npm install
@@ -26,7 +28,7 @@ npm run prisma:generate
 npm run prisma:migrate
 ```
 
-Run the Express API on [http://localhost:4000](http://localhost:4000):
+Run the Express API on the URL configured in `NEXT_PUBLIC_API_URL`. By default that is [http://localhost:4000](http://localhost:4000):
 
 ```bash
 npm run dev:api

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
   Container,
   FormControlLabel,
-  IconButton,
   InputAdornment,
   Paper,
   Switch,
@@ -15,9 +15,9 @@ import {
   ThemeProvider,
   ToggleButton,
   ToggleButtonGroup,
-  Tooltip,
   Typography,
   createTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
   animateAuthStage,
@@ -30,12 +30,20 @@ import {
 
 type AuthMode = "login" | "register";
 type PaletteMode = "light" | "dark";
-
-const cryptoFact = {
-  eyebrow: "Criptografia moderna",
-  title: "Curve25519 no implica claves intercambiables.",
-  description:
-    "Aunque X25519 y Ed25519 nacen de la misma familia, reutilizar la misma clave para cifrado y firma sigue siendo una mala idea por sus reglas de derivacion y codificacion.",
+type LoginValues = {
+  email: string;
+  password: string;
+};
+type RegisterValues = {
+  name: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+};
+type SubmitState = {
+  isSubmitting: boolean;
+  error: string | null;
 };
 
 const authFields = {
@@ -67,12 +75,37 @@ const authFields = {
   ],
 };
 
+const initialLoginValues: LoginValues = {
+  email: "",
+  password: "",
+};
+
+const initialRegisterValues: RegisterValues = {
+  name: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  password: "",
+};
+
 export function AuthExperience() {
   const [authMode, setAuthMode] = useState<AuthMode>("register");
-  const [paletteMode, setPaletteMode] = useState<PaletteMode>("dark");
+  const [loginValues, setLoginValues] = useState<LoginValues>(initialLoginValues);
+  const [registerValues, setRegisterValues] = useState<RegisterValues>(initialRegisterValues);
+  const [loginState, setLoginState] = useState<SubmitState>({
+    isSubmitting: false,
+    error: null,
+  });
+  const [registerState, setRegisterState] = useState<SubmitState>({
+    isSubmitting: false,
+    error: null,
+  });
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const cardSlotRef = useRef<HTMLDivElement | null>(null);
   const visualSlotRef = useRef<HTMLDivElement | null>(null);
   const didMountStageRef = useRef(false);
+  const router = useRouter();
+  const paletteMode: PaletteMode = prefersDarkMode ? "dark" : "light";
 
   const theme = useMemo(
     () =>
@@ -154,6 +187,85 @@ export function AuthExperience() {
     });
   }, [authMode]);
 
+  async function submitAuthForm(mode: AuthMode) {
+    const isLogin = mode === "login";
+    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+    const payload = isLogin ? loginValues : registerValues;
+    const setState = isLogin ? setLoginState : setRegisterState;
+
+    setState({
+      isSubmitting: true,
+      error: null,
+    });
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        setState({
+          isSubmitting: false,
+          error: result?.error ?? "No se pudo completar la solicitud.",
+        });
+        return;
+      }
+
+      setState({
+        isSubmitting: false,
+        error: null,
+      });
+
+      if (!isLogin) {
+        setLoginValues({
+          email: registerValues.email,
+          password: "",
+        });
+        setRegisterValues(initialRegisterValues);
+      }
+
+      startTransition(() => {
+        router.push("/inicio");
+        router.refresh();
+      });
+    } catch {
+      setState({
+        isSubmitting: false,
+        error: "No se pudo conectar con el servidor.",
+      });
+    }
+  }
+
+  function updateLoginValue(field: keyof LoginValues, value: string) {
+    setLoginValues((current) => ({
+      ...current,
+      [field]: value,
+    }));
+    setLoginState((current) => ({
+      ...current,
+      error: null,
+    }));
+  }
+
+  function updateRegisterValue(field: keyof RegisterValues, value: string) {
+    setRegisterValues((current) => ({
+      ...current,
+      [field]: value,
+    }));
+    setRegisterState((current) => ({
+      ...current,
+      error: null,
+    }));
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <Box
@@ -222,12 +334,17 @@ export function AuthExperience() {
                 authMode={authMode}
                 paletteMode={paletteMode}
                 onAuthModeChange={setAuthMode}
-                onPaletteModeChange={setPaletteMode}
+                loginValues={loginValues}
+                registerValues={registerValues}
+                loginState={loginState}
+                registerState={registerState}
+                onLoginChange={updateLoginValue}
+                onRegisterChange={updateRegisterValue}
+                onSubmit={submitAuthForm}
               />
             </Box>
           </Box>
         </Container>
-        <MainShowcase paletteMode={paletteMode} />
       </Box>
     </ThemeProvider>
   );
@@ -379,12 +496,24 @@ function AuthPanel({
   authMode,
   paletteMode,
   onAuthModeChange,
-  onPaletteModeChange,
+  loginValues,
+  registerValues,
+  loginState,
+  registerState,
+  onLoginChange,
+  onRegisterChange,
+  onSubmit,
 }: {
   authMode: AuthMode;
   paletteMode: PaletteMode;
   onAuthModeChange: (mode: AuthMode) => void;
-  onPaletteModeChange: (mode: PaletteMode) => void;
+  loginValues: LoginValues;
+  registerValues: RegisterValues;
+  loginState: SubmitState;
+  registerState: SubmitState;
+  onLoginChange: (field: keyof LoginValues, value: string) => void;
+  onRegisterChange: (field: keyof RegisterValues, value: string) => void;
+  onSubmit: (mode: AuthMode) => Promise<void>;
 }) {
   const isLogin = authMode === "login";
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -424,7 +553,7 @@ function AuthPanel({
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
             gap: 2,
           }}
         >
@@ -436,21 +565,6 @@ function AuthPanel({
               {isLogin ? "Accede con tus credenciales." : "Registra tus datos principales."}
             </Typography>
           </Box>
-
-          <Tooltip title={paletteMode === "dark" ? "Tema claro" : "Tema oscuro"}>
-            <IconButton
-              aria-label="Cambiar tema"
-              onClick={() => onPaletteModeChange(paletteMode === "dark" ? "light" : "dark")}
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                width: 44,
-                height: 44,
-              }}
-            >
-              {paletteMode === "dark" ? "CL" : "OS"}
-            </IconButton>
-          </Tooltip>
         </Box>
 
         <ToggleButtonGroup
@@ -480,10 +594,26 @@ function AuthPanel({
             }}
           >
             <Box sx={{ width: "50%", pr: { xs: 1, sm: 1.5 } }}>
-              <AuthForm ref={loginFormRef} authMode="login" active={authMode === "login"} />
+              <AuthForm
+                ref={loginFormRef}
+                authMode="login"
+                active={authMode === "login"}
+                values={loginValues}
+                submitState={loginState}
+                onChange={onLoginChange}
+                onSubmit={onSubmit}
+              />
             </Box>
             <Box sx={{ width: "50%", pl: { xs: 1, sm: 1.5 } }}>
-              <AuthForm ref={registerFormRef} authMode="register" active={authMode === "register"} />
+              <AuthForm
+                ref={registerFormRef}
+                authMode="register"
+                active={authMode === "register"}
+                values={registerValues}
+                submitState={registerState}
+                onChange={onRegisterChange}
+                onSubmit={onSubmit}
+              />
             </Box>
           </Box>
         </Box>
@@ -492,146 +622,22 @@ function AuthPanel({
   );
 }
 
-function MainShowcase({ paletteMode }: { paletteMode: PaletteMode }) {
-  return (
-    <Container
-      maxWidth="lg"
-      sx={{
-        position: "relative",
-        zIndex: 1,
-        py: { xs: 6, md: 10 },
-      }}
-    >
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1.1fr .9fr" },
-          gap: { xs: 3, md: 4 },
-          alignItems: "stretch",
-        }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, md: 4 },
-            borderRadius: 4,
-            border: "1px solid",
-            borderColor: paletteMode === "dark" ? "rgba(158,208,255,.16)" : "rgba(7,89,201,.12)",
-            bgcolor: paletteMode === "dark" ? "rgba(13, 28, 46, .72)" : "rgba(255,255,255,.84)",
-            backdropFilter: "blur(20px)",
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: paletteMode === "dark" ? "#9ed0ff" : "#0759c9",
-            }}
-          >
-            {cryptoFact.eyebrow}
-          </Typography>
-          <Typography variant="h3" sx={{ mt: 1.5, fontSize: { xs: 28, md: 38 }, lineHeight: 1.05 }}>
-            {cryptoFact.title}
-          </Typography>
-          <Typography sx={{ mt: 2, color: "text.secondary", lineHeight: 1.75, maxWidth: 680 }}>
-            {cryptoFact.description}
-          </Typography>
-          <Box
-            sx={{
-              mt: 3,
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
-              gap: 1.5,
-            }}
-          >
-            {[
-              "X25519 se usa para intercambio de claves.",
-              "Ed25519 se usa para firmas digitales.",
-              "La curva base es parecida, el uso correcto no lo es.",
-              "Separar claves reduce errores operativos reales.",
-            ].map((item) => (
-              <Box
-                key={item}
-                sx={{
-                  px: 1.5,
-                  py: 1.25,
-                  borderRadius: 2,
-                  border: "1px solid",
-                  borderColor:
-                    paletteMode === "dark" ? "rgba(255,255,255,.08)" : "rgba(7,89,201,.08)",
-                  bgcolor: paletteMode === "dark" ? "rgba(255,255,255,.03)" : "rgba(7,89,201,.03)",
-                }}
-              >
-                <Typography sx={{ fontSize: 14 }}>{item}</Typography>
-              </Box>
-            ))}
-          </Box>
-        </Paper>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, md: 3 },
-            borderRadius: 4,
-            border: "1px solid",
-            borderColor: paletteMode === "dark" ? "rgba(158,208,255,.16)" : "rgba(7,89,201,.12)",
-            bgcolor: paletteMode === "dark" ? "rgba(13, 28, 46, .72)" : "rgba(255,255,255,.84)",
-            backdropFilter: "blur(20px)",
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: paletteMode === "dark" ? "#9ed0ff" : "#0759c9",
-            }}
-          >
-            Foto grupal
-          </Typography>
-          <Box
-            sx={{
-              mt: 1.5,
-              minHeight: { xs: 240, md: 420 },
-              borderRadius: 3,
-              border: "1px dashed",
-              borderColor: paletteMode === "dark" ? "rgba(158,208,255,.38)" : "rgba(7,89,201,.24)",
-              background:
-                paletteMode === "dark"
-                  ? "linear-gradient(160deg, rgba(98,168,255,.12), rgba(7,17,31,.12)), repeating-linear-gradient(135deg, rgba(255,255,255,.02), rgba(255,255,255,.02) 14px, rgba(255,255,255,.06) 14px, rgba(255,255,255,.06) 28px)"
-                  : "linear-gradient(160deg, rgba(7,89,201,.08), rgba(255,255,255,.24)), repeating-linear-gradient(135deg, rgba(7,89,201,.03), rgba(7,89,201,.03) 14px, rgba(255,255,255,.3) 14px, rgba(255,255,255,.3) 28px)",
-              display: "grid",
-              placeItems: "center",
-              textAlign: "center",
-              px: 3,
-            }}
-          >
-            <Box>
-              <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 34 }, fontWeight: 780 }}>
-                Espacio para foto grupal
-              </Typography>
-              <Typography sx={{ mt: 1.5, color: "text.secondary", maxWidth: 340 }}>
-                Esta area queda lista para colocar la imagen principal del equipo justo despues del bloque de login.
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
-  );
-}
-
 function AuthForm({
   authMode,
   active,
   ref,
+  values,
+  submitState,
+  onChange,
+  onSubmit,
 }: {
   authMode: AuthMode;
   active: boolean;
   ref: React.Ref<HTMLDivElement>;
+  values: LoginValues | RegisterValues;
+  submitState: SubmitState;
+  onChange: (field: "email" | "password" | "name" | "lastName" | "phone", value: string) => void;
+  onSubmit: (mode: AuthMode) => Promise<void>;
 }) {
   const fields = authFields[authMode];
   const isLogin = authMode === "login";
@@ -643,6 +649,10 @@ function AuthForm({
       noValidate
       autoComplete="on"
       aria-hidden={!active}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void onSubmit(authMode);
+      }}
       sx={{
         ...authFormFade(active),
       }}
@@ -656,6 +666,13 @@ function AuthForm({
             label={field.label}
             type={field.type}
             autoComplete={field.autoComplete}
+            value={values[field.name as keyof typeof values] ?? ""}
+            onChange={(event) =>
+              onChange(
+                field.name as "email" | "password" | "name" | "lastName" | "phone",
+                event.target.value,
+              )
+            }
             slotProps={
               field.name === "phone"
                 ? {
@@ -667,6 +684,12 @@ function AuthForm({
             }
           />
         ))}
+
+        {submitState.error ? (
+          <Typography sx={{ color: "#ff8f8f", fontSize: 13 }}>
+            {submitState.error}
+          </Typography>
+        ) : null}
 
         {isLogin && (
           <Box
@@ -684,8 +707,14 @@ function AuthForm({
           </Box>
         )}
 
-        <Button type="submit" variant="contained" size="large">
-          {isLogin ? "Entrar" : "Registrarme"}
+        <Button type="submit" variant="contained" size="large" disabled={submitState.isSubmitting}>
+          {submitState.isSubmitting
+            ? isLogin
+              ? "Entrando..."
+              : "Registrando..."
+            : isLogin
+              ? "Entrar"
+              : "Registrarme"}
         </Button>
 
         <Typography sx={{ color: "text.secondary", fontSize: 13, textAlign: "center" }}>

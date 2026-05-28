@@ -1,13 +1,10 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
-
-const databaseUrl =
-  process.env.DATABASE_URL ??
-  "postgresql://postgres:postgres@localhost:5432/logincripto?schema=public";
+import { config } from "./server/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: databaseUrl,
+    url: config.db.url,
   },
 });

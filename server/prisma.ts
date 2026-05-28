@@ -1,19 +1,16 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { config } from "./config";
 import { PrismaClient } from "./generated/prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-const connectionString =
-  process.env.DATABASE_URL ??
-  "postgresql://postgres:postgres@localhost:5432/logincripto?schema=public";
-
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    adapter: new PrismaPg({ connectionString: config.db.url }),
   });
 
 if (process.env.NODE_ENV !== "production") {

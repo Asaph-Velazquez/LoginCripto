@@ -1,0 +1,64 @@
+function readNumber(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function buildUrl(protocol: string, host: string, port: number, path = "") {
+  return `${protocol}://${host}:${port}${path}`;
+}
+
+const appProtocol = process.env.APP_PROTOCOL ?? "http";
+const appHost = process.env.APP_HOST ?? "localhost";
+const appPort = readNumber(process.env.APP_PORT, 3000);
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.APP_URL ??
+  buildUrl(appProtocol, appHost, appPort);
+
+const apiProtocol = process.env.API_PROTOCOL ?? "http";
+const apiHost = process.env.API_HOST ?? "localhost";
+const apiPort = readNumber(process.env.API_PORT, 4000);
+const apiUrl =
+  process.env.NEXT_PUBLIC_API_URL ??
+  process.env.API_URL ??
+  buildUrl(apiProtocol, apiHost, apiPort);
+
+const dbHost = process.env.DB_HOST ?? "localhost";
+const dbPort = readNumber(process.env.DB_PORT, 5233);
+const dbName = process.env.DB_NAME ?? "logincripto";
+const dbSchema = process.env.DB_SCHEMA ?? "public";
+const dbUser = process.env.DB_USER ?? "postgres";
+const dbPassword = process.env.DB_PASSWORD ?? "postgres";
+const databaseUrl =
+  process.env.DATABASE_URL ??
+  `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=${dbSchema}`;
+
+export const config = {
+  app: {
+    protocol: appProtocol,
+    host: appHost,
+    port: appPort,
+    url: appUrl,
+  },
+  api: {
+    protocol: apiProtocol,
+    host: apiHost,
+    port: apiPort,
+    url: apiUrl,
+    corsOrigin: process.env.CORS_ORIGIN ?? appUrl,
+  },
+  db: {
+    host: dbHost,
+    port: dbPort,
+    name: dbName,
+    schema: dbSchema,
+    user: dbUser,
+    password: dbPassword,
+    url: databaseUrl,
+  },
+  auth: {
+    passwordSaltRounds: readNumber(process.env.PASSWORD_SALT_ROUNDS, 12),
+    passwordRecoveryUrl:
+      process.env.PASSWORD_RECOVERY_URL ?? `${appUrl}/recuperar-contrasena`,
+  },
+} as const;

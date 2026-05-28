@@ -4,15 +4,16 @@ import "dotenv/config";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { z } from "zod";
 
+import { config } from "./config";
 import { prisma } from "./prisma";
 
 const app = express();
-const port = Number(process.env.API_PORT ?? 4000);
-const passwordSaltRounds = Number(process.env.PASSWORD_SALT_ROUNDS ?? 12);
+const port = config.api.port;
+const passwordSaltRounds = config.auth.passwordSaltRounds;
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+    origin: config.api.corsOrigin,
     credentials: true,
   }),
 );
@@ -191,5 +192,5 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
+  console.log(`API listening on ${config.api.url}`);
 });
