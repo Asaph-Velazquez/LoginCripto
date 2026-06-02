@@ -60,5 +60,21 @@ export const config = {
     passwordSaltRounds: readNumber(process.env.PASSWORD_SALT_ROUNDS, 12),
     passwordRecoveryUrl:
       process.env.PASSWORD_RECOVERY_URL ?? `${appUrl}/recuperar-contrasena`,
+    passwordRecoveryCodeTtlMinutes: readNumber(
+      process.env.PASSWORD_RECOVERY_CODE_TTL_MINUTES,
+      10,
+    ),
+    passwordRecoveryResendCooldownSeconds: readNumber(
+      process.env.PASSWORD_RECOVERY_RESEND_COOLDOWN_SECONDS,
+      60,
+    ),
+  },
+  email: {
+    from: process.env.EMAIL_FROM ?? "",
+    smtpHost: process.env.SMTP_HOST ?? "smtp.gmail.com",
+    smtpPort: readNumber(process.env.SMTP_PORT, 465),
+    smtpSecure: (process.env.SMTP_SECURE ?? "true").toLowerCase() === "true",
+    smtpUser: process.env.SMTP_USER ?? "",
+    smtpPass: process.env.SMTP_PASS ?? "",
   },
 } as const;

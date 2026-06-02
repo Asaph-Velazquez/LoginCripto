@@ -8,6 +8,7 @@ import { config } from "./config";
 import { prisma } from "./prisma";
 
 const app = express();
+const host = config.api.host;
 const port = config.api.port;
 const passwordSaltRounds = config.auth.passwordSaltRounds;
 
@@ -191,6 +192,6 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "Error interno del servidor." });
 });
 
-app.listen(port, () => {
+app.listen(port, host, () => {
   console.log(`API listening on ${config.api.url}`);
 });

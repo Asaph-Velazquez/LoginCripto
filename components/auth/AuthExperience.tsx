@@ -26,6 +26,7 @@ import {
   authFormFade,
   authSlideTrack,
   authStageSlot,
+  getGradientInitialState,
 } from "./animations";
 
 type AuthMode = "login" | "register";
@@ -51,7 +52,7 @@ const authFields = {
     { name: "email", label: "Correo", type: "email", autoComplete: "email" },
     {
       name: "password",
-      label: "Contrasena",
+      label: "Contraseña",
       type: "password",
       autoComplete: "current-password",
     },
@@ -68,7 +69,7 @@ const authFields = {
     { name: "phone", label: "Numero de celular", type: "tel", autoComplete: "tel" },
     {
       name: "password",
-      label: "Contrasena",
+      label: "Contraseña",
       type: "password",
       autoComplete: "new-password",
     },
@@ -89,7 +90,7 @@ const initialRegisterValues: RegisterValues = {
 };
 
 export function AuthExperience() {
-  const [authMode, setAuthMode] = useState<AuthMode>("register");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [loginValues, setLoginValues] = useState<LoginValues>(initialLoginValues);
   const [registerValues, setRegisterValues] = useState<RegisterValues>(initialRegisterValues);
   const [loginState, setLoginState] = useState<SubmitState>({
@@ -313,7 +314,7 @@ export function AuthExperience() {
                 ...authStageSlot("visual"),
                 transform: {
                   xs: "none",
-                  md: "translateX(0%)",
+                  md: "translateX(100%)",
                 },
               }}
             >
@@ -326,7 +327,7 @@ export function AuthExperience() {
                 ...authStageSlot("card"),
                 transform: {
                   xs: "none",
-                  md: "translateX(100%)",
+                  md: "translateX(0%)",
                 },
               }}
             >
@@ -358,6 +359,12 @@ function VisualPanel({
   paletteMode: PaletteMode;
 }) {
   const gradientRef = useRef<HTMLDivElement | null>(null);
+  const item0 = getGradientInitialState(0);
+  const item1 = getGradientInitialState(1);
+  const item2 = getGradientInitialState(2);
+  const item3 = getGradientInitialState(3);
+  const item4 = getGradientInitialState(4);
+  const item5 = getGradientInitialState(5);
 
   useEffect(() => {
     animateGradientPanel(Array.from(gradientRef.current?.querySelectorAll("[data-visual-item]") ?? []));
@@ -410,7 +417,8 @@ function VisualPanel({
           background:
             "radial-gradient(ellipse at 36% 42%, rgba(55,213,255,.9), rgba(7,89,201,.38) 48%, rgba(7,17,31,0) 76%)",
           filter: "blur(18px)",
-          opacity: paletteMode === "dark" ? 0.64 : 0.5,
+          opacity: paletteMode === "dark" ? item0.opacity : item0.opacity * 0.78,
+          transform: `translateX(${item0.translateX}) translateY(${item0.translateY}) scale(${item0.scale}) rotate(${item0.rotate})`,
         }}
       />
       <Box
@@ -425,7 +433,8 @@ function VisualPanel({
           background:
             "radial-gradient(ellipse at 52% 48%, rgba(158,208,255,.82), rgba(0,141,180,.34) 50%, rgba(7,17,31,0) 78%)",
           filter: "blur(22px)",
-          opacity: paletteMode === "dark" ? 0.58 : 0.46,
+          opacity: paletteMode === "dark" ? item1.opacity : item1.opacity * 0.6,
+          transform: `translateX(${item1.translateX}) translateY(${item1.translateY}) scale(${item1.scale}) rotate(${item1.rotate})`,
         }}
       />
       <Box
@@ -440,7 +449,8 @@ function VisualPanel({
           background:
             "linear-gradient(135deg, rgba(98,168,255,.5), rgba(55,213,255,.2), rgba(7,89,201,.36))",
           filter: "blur(14px)",
-          opacity: paletteMode === "dark" ? 0.54 : 0.4,
+          opacity: paletteMode === "dark" ? item2.opacity : item2.opacity * 0.52,
+          transform: `translateX(${item2.translateX}) translateY(${item2.translateY}) scale(${item2.scale}) rotate(${item2.rotate})`,
         }}
       />
       <Box
@@ -455,7 +465,8 @@ function VisualPanel({
           background:
             "radial-gradient(circle at 50% 50%, rgba(255,255,255,.34), rgba(98,168,255,.22) 42%, rgba(7,89,201,0) 74%)",
           filter: "blur(20px)",
-          opacity: paletteMode === "dark" ? 0.38 : 0.42,
+          opacity: paletteMode === "dark" ? item3.opacity * 0.48 : item3.opacity * 0.54,
+          transform: `translateX(${item3.translateX}) translateY(${item3.translateY}) scale(${item3.scale}) rotate(${item3.rotate})`,
         }}
       />
       <Box
@@ -470,7 +481,8 @@ function VisualPanel({
           background:
             "linear-gradient(90deg, rgba(55,213,255,0), rgba(55,213,255,.32), rgba(158,208,255,.28), rgba(55,213,255,0))",
           filter: "blur(16px)",
-          opacity: paletteMode === "dark" ? 0.46 : 0.32,
+          opacity: paletteMode === "dark" ? item4.opacity * 0.54 : item4.opacity * 0.4,
+          transform: `translateX(${item4.translateX}) translateY(${item4.translateY}) scale(${item4.scale}) rotate(${item4.rotate})`,
         }}
       />
       <Box
@@ -485,7 +497,8 @@ function VisualPanel({
           background:
             "radial-gradient(ellipse at center, rgba(7,89,201,.44), rgba(55,213,255,.22) 46%, rgba(7,17,31,0) 76%)",
           filter: "blur(18px)",
-          opacity: paletteMode === "dark" ? 0.48 : 0.34,
+          opacity: paletteMode === "dark" ? item5.opacity * 0.62 : item5.opacity * 0.44,
+          transform: `translateX(${item5.translateX}) translateY(${item5.translateY}) scale(${item5.scale}) rotate(${item5.rotate})`,
         }}
       />
     </Box>
@@ -622,25 +635,29 @@ function AuthPanel({
   );
 }
 
-function AuthForm({
-  authMode,
-  active,
-  ref,
-  values,
-  submitState,
-  onChange,
-  onSubmit,
-}: {
-  authMode: AuthMode;
-  active: boolean;
-  ref: React.Ref<HTMLDivElement>;
-  values: LoginValues | RegisterValues;
-  submitState: SubmitState;
-  onChange: (field: "email" | "password" | "name" | "lastName" | "phone", value: string) => void;
-  onSubmit: (mode: AuthMode) => Promise<void>;
-}) {
-  const fields = authFields[authMode];
+type AuthFormProps =
+  | {
+      authMode: "login";
+      active: boolean;
+      values: LoginValues;
+      submitState: SubmitState;
+      onChange: (field: keyof LoginValues, value: string) => void;
+      onSubmit: (mode: AuthMode) => Promise<void>;
+      ref: React.Ref<HTMLDivElement>;
+    }
+  | {
+      authMode: "register";
+      active: boolean;
+      values: RegisterValues;
+      submitState: SubmitState;
+      onChange: (field: keyof RegisterValues, value: string) => void;
+      onSubmit: (mode: AuthMode) => Promise<void>;
+      ref: React.Ref<HTMLDivElement>;
+    };
+
+function AuthForm({ authMode, active, ref, values, submitState, onChange, onSubmit }: AuthFormProps) {
   const isLogin = authMode === "login";
+  const fields = authFields[authMode];
 
   return (
     <Box
@@ -668,10 +685,7 @@ function AuthForm({
             autoComplete={field.autoComplete}
             value={values[field.name as keyof typeof values] ?? ""}
             onChange={(event) =>
-              onChange(
-                field.name as "email" | "password" | "name" | "lastName" | "phone",
-                event.target.value,
-              )
+              onChange(field.name as keyof LoginValues & keyof RegisterValues, event.target.value)
             }
             slotProps={
               field.name === "phone"
@@ -686,9 +700,7 @@ function AuthForm({
         ))}
 
         {submitState.error ? (
-          <Typography sx={{ color: "#ff8f8f", fontSize: 13 }}>
-            {submitState.error}
-          </Typography>
+          <Typography sx={{ color: "#ff8f8f", fontSize: 13 }}>{submitState.error}</Typography>
         ) : null}
 
         {isLogin && (
@@ -702,19 +714,13 @@ function AuthForm({
           >
             <FormControlLabel control={<Switch size="small" />} label="Recordarme" />
             <Button component={Link} href="/recuperar-contrasena" variant="text" sx={{ px: 0 }}>
-              Olvide mi contrasena
+              Olvide mi contraseña
             </Button>
           </Box>
         )}
 
         <Button type="submit" variant="contained" size="large" disabled={submitState.isSubmitting}>
-          {submitState.isSubmitting
-            ? isLogin
-              ? "Entrando..."
-              : "Registrando..."
-            : isLogin
-              ? "Entrar"
-              : "Registrarme"}
+          {submitState.isSubmitting ? (isLogin ? "Entrando..." : "Registrando...") : isLogin ? "Entrar" : "Registrarme"}
         </Button>
 
         <Typography sx={{ color: "text.secondary", fontSize: 13, textAlign: "center" }}>

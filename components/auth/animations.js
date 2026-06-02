@@ -3,7 +3,7 @@ import { animate, remove } from "animejs";
 export const authSlideTrack = () => ({
   display: "flex",
   width: "200%",
-  transform: "translateX(-50%)",
+  transform: "translateX(0%)",
 });
 
 export const authFormFade = (active) => ({
@@ -74,7 +74,7 @@ export function animateGradientPanel(items) {
 
   animate(items, {
     translateX: (_, index) =>
-      index % 2 === 0 ? ["-26%", "24%"] : ["24%", "-26%"],
+      index % 2 === 0 ? ["24%", "-26%"] : ["-26%", "24%"],
     translateY: (_, index) =>
       index % 3 === 0 ? ["18%", "-20%"] : ["-16%", "19%"],
     scale: (_, index) =>
@@ -89,6 +89,16 @@ export function animateGradientPanel(items) {
     loop: true,
     alternate: true,
   });
+}
+
+export function getGradientInitialState(index) {
+  return {
+    translateX: index % 2 === 0 ? "24%" : "-26%",
+    translateY: index % 3 === 0 ? "18%" : "-16%",
+    scale: index % 2 === 0 ? 0.78 : 1.2,
+    rotate: index % 2 === 0 ? "-24deg" : "34deg",
+    opacity: index % 2 === 0 ? 0.36 : 0.78,
+  };
 }
 
 export function animateAuthTransition({ mode, track, loginForm, registerForm }) {

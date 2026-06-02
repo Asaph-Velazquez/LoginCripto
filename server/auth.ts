@@ -57,6 +57,28 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
+export const passwordResetSchema = z
+  .object({
+    email: z.string().trim().email().max(320),
+    verificationCode: z.string().trim().regex(/^\d{6}$/),
+    password: z.string().min(8).max(128),
+    confirmPassword: z.string().min(8).max(128),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Las contrasenas no coinciden.",
+        path: ["confirmPassword"],
+      });
+    }
+  })
+  .transform((data) => ({
+    email: data.email.toLowerCase(),
+    verificationCode: data.verificationCode,
+    password: data.password,
+  }));
+
 export function serializeUser(user: User) {
   return {
     id: user.id,
