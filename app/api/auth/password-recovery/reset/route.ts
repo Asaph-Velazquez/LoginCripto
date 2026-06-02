@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const consumedCode = consumePasswordRecoveryCode(
+    const consumedCode = await consumePasswordRecoveryCode(
       data.email,
       data.verificationCode,
     );

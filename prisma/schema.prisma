@@ -24,3 +24,17 @@ model User {
   @@index([phoneNumber], map: "users_phone_number_idx")
   @@map("users")
 }
+
+model PasswordRecoveryCode {
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String    @db.VarChar(320)
+  code        String    @db.VarChar(6)
+  requestedAt DateTime  @default(now()) @map("requested_at") @db.Timestamptz(6)
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt  DateTime? @map("consumed_at") @db.Timestamptz(6)
+
+  @@index([email], map: "password_recovery_codes_email_idx")
+  @@index([email, requestedAt], map: "password_recovery_codes_email_requested_at_idx")
+  @@index([email, code], map: "password_recovery_codes_email_code_idx")
+  @@map("password_recovery_codes")
+}

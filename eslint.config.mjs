@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+
+    // Repo-local tooling / templates (not shipped with the app):
+    ".agents/**",
+    "emails/**",
   ]),
 ]);
 

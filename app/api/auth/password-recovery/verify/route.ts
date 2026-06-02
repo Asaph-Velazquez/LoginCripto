@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const data = parsePasswordRecoveryCodeVerification(body);
-    const verifiedCode = verifyPasswordRecoveryCode(
+    const verifiedCode = await verifyPasswordRecoveryCode(
       data.email,
       data.verificationCode,
     );

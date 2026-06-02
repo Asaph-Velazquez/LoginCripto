@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const issuedCode = issuePasswordRecoveryCode(user.email);
+    const issuedCode = await issuePasswordRecoveryCode(user.email);
 
     if (!issuedCode.ok) {
       return NextResponse.json(

@@ -3,15 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "node scripts/next-server.mjs dev",
     "dev:api": "tsx watch server/index.ts",
     "api": "tsx server/index.ts",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "node scripts/next-server.mjs start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
@@ -31,6 +36,9 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.4.3"
+  },
+  "optionalDependencies": {
+    "@next/swc-win32-x64-msvc": "16.2.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

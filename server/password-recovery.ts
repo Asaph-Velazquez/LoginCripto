@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import { z } from "zod";
 
 import { config } from "@/server/config";
+import { prisma } from "@/server/prisma";
 
 const requestPasswordRecoverySchema = z.object({
   email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
@@ -12,14 +13,6 @@ const verifyPasswordRecoveryCodeSchema = z.object({
   email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
   verificationCode: z.string().trim().regex(/^\d{6}$/),
 });
-
-type PasswordRecoveryRecord = {
-  code: string;
-  expiresAt: number;
-  requestedAt: number;
-};
-
-const passwordRecoveryStore = new Map<string, PasswordRecoveryRecord>();
 
 export const passwordRecoveryCodeLength = 6;
 export const passwordRecoveryTtlMinutes = config.auth.passwordRecoveryCodeTtlMinutes;
@@ -41,56 +34,77 @@ export function createPasswordRecoveryCode() {
   return String(randomInt(min, max));
 }
 
-export function issuePasswordRecoveryCode(email: string) {
-  const now = Date.now();
-  const current = passwordRecoveryStore.get(email);
+async function getLatestActivePasswordRecoveryRecord(email: string) {
+  const now = new Date();
+
+  const record = await prisma.passwordRecoveryCode.findFirst({
+    where: {
+      email,
+      consumedAt: null,
+      expiresAt: {
+        gt: now,
+      },
+    },
+    orderBy: { requestedAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      code: true,
+      requestedAt: true,
+      expiresAt: true,
+    },
+  });
+
+  return record;
+}
+
+export async function issuePasswordRecoveryCode(email: string) {
+  const nowMs = Date.now();
   const cooldownMs = passwordRecoveryResendCooldownSeconds * 1000;
 
-  if (current && now - current.requestedAt < cooldownMs) {
-    const retryAfterSeconds = Math.max(
-      1,
-      Math.ceil((cooldownMs - (now - current.requestedAt)) / 1000),
-    );
+  const lastRequest = await prisma.passwordRecoveryCode.findFirst({
+    where: { email },
+    orderBy: { requestedAt: "desc" },
+    select: { requestedAt: true },
+  });
 
-    return {
-      ok: false as const,
-      retryAfterSeconds,
-    };
+  if (lastRequest) {
+    const requestedAtMs = lastRequest.requestedAt.getTime();
+
+    if (nowMs - requestedAtMs < cooldownMs) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((cooldownMs - (nowMs - requestedAtMs)) / 1000),
+      );
+
+      return {
+        ok: false as const,
+        retryAfterSeconds,
+      };
+    }
   }
 
   const code = createPasswordRecoveryCode();
-  const expiresAt = now + passwordRecoveryTtlMinutes * 60 * 1000;
+  const expiresAtMs = nowMs + passwordRecoveryTtlMinutes * 60 * 1000;
 
-  passwordRecoveryStore.set(email, {
-    code,
-    expiresAt,
-    requestedAt: now,
+  await prisma.passwordRecoveryCode.create({
+    data: {
+      email,
+      code,
+      expiresAt: new Date(expiresAtMs),
+    },
+    select: { id: true },
   });
 
   return {
     ok: true as const,
     code,
-    expiresAt,
+    expiresAt: expiresAtMs,
   };
 }
 
-export function getPasswordRecoveryCode(email: string) {
-  const record = passwordRecoveryStore.get(email);
-
-  if (!record) {
-    return null;
-  }
-
-  if (record.expiresAt <= Date.now()) {
-    passwordRecoveryStore.delete(email);
-    return null;
-  }
-
-  return record;
-}
-
-export function verifyPasswordRecoveryCode(email: string, code: string) {
-  const record = getPasswordRecoveryCode(email);
+export async function verifyPasswordRecoveryCode(email: string, code: string) {
+  const record = await getLatestActivePasswordRecoveryRecord(email);
 
   if (!record) {
     return { ok: false as const, reason: "expired" as const };
@@ -103,14 +117,22 @@ export function verifyPasswordRecoveryCode(email: string, code: string) {
   return { ok: true as const };
 }
 
-export function consumePasswordRecoveryCode(email: string, code: string) {
-  const result = verifyPasswordRecoveryCode(email, code);
+export async function consumePasswordRecoveryCode(email: string, code: string) {
+  const record = await getLatestActivePasswordRecoveryRecord(email);
 
-  if (!result.ok) {
-    return result;
+  if (!record) {
+    return { ok: false as const, reason: "expired" as const };
   }
 
-  passwordRecoveryStore.delete(email);
+  if (record.code !== code) {
+    return { ok: false as const, reason: "invalid" as const };
+  }
+
+  await prisma.passwordRecoveryCode.update({
+    where: { id: record.id },
+    data: { consumedAt: new Date() },
+    select: { id: true },
+  });
 
   return { ok: true as const };
 }

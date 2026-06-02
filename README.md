@@ -60,3 +60,16 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 # LoginCripto
+
+## Despliegue en Vercel (recomendado)
+
+Este repo ya tiene API Routes en `app/api/**` (Next.js Route Handlers) y están marcadas con `export const runtime = "nodejs";`, lo cual es compatible con Prisma en Vercel.
+
+1. Importa el repo en Vercel (Framework: Next.js).
+2. Configura variables de entorno (Production + Preview) al menos:
+   - `DATABASE_URL` (Postgres)
+   - `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`
+   - `PASSWORD_RECOVERY_URL` (normalmente `https://<tu-dominio>/recuperar-contrasena`)
+3. Migraciones: ejecútalas fuera del runtime serverless (por ejemplo, en tu máquina o en un job/CI) usando `prisma migrate deploy` o el flujo que prefieras; el deploy no debería depender de `prisma migrate dev`.
+
+Nota: la lógica de códigos de recuperación de contraseña en `server/password-recovery.ts` usa un `Map` en memoria; en entornos serverless puede perderse entre invocaciones. Para producción conviene persistir esos códigos en la base de datos o en un KV/Redis.
