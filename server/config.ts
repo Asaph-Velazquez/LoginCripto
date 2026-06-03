@@ -29,7 +29,20 @@ const dbName = process.env.DB_NAME ?? "logincripto";
 const dbSchema = process.env.DB_SCHEMA ?? "public";
 const dbUser = process.env.DB_USER ?? "postgres";
 const dbPassword = process.env.DB_PASSWORD ?? "postgres";
+const cleverDbHost = process.env.POSTGRESQL_ADDON_HOST;
+const cleverDbPort = process.env.POSTGRESQL_ADDON_PORT;
+const cleverDbName = process.env.POSTGRESQL_ADDON_DB;
+const cleverDbUser = process.env.POSTGRESQL_ADDON_USER;
+const cleverDbPassword = process.env.POSTGRESQL_ADDON_PASSWORD;
+const cleverDatabaseUrl =
+  cleverDbHost && cleverDbPort && cleverDbName && cleverDbUser && cleverDbPassword
+    ? `postgresql://${encodeURIComponent(cleverDbUser)}:${encodeURIComponent(
+        cleverDbPassword,
+      )}@${cleverDbHost}:${cleverDbPort}/${cleverDbName}?schema=${dbSchema}&sslmode=require`
+    : undefined;
 const databaseUrl =
+  cleverDatabaseUrl ??
+  process.env.POSTGRESQL_ADDON_URI ??
   process.env.DATABASE_URL ??
   `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=${dbSchema}`;
 
