@@ -53,7 +53,7 @@ const registerSchema = z
     if (!phoneNumber) {
       ctx.addIssue({
         code: "custom",
-        message: "El numero de celular es requerido.",
+        message: "El número de celular es requerido.",
         path: ["phoneNumber"],
       });
     }
@@ -127,7 +127,7 @@ app.post("/api/auth/register", async (req, res, next) => {
     res.status(201).json({ user: serializeUser(user) });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      res.status(409).json({ error: "El correo o celular ya esta registrado." });
+      res.status(409).json({ error: "El correo o celular ya está registrado." });
       return;
     }
 
@@ -143,14 +143,14 @@ app.post("/api/auth/login", async (req, res, next) => {
     });
 
     if (!user) {
-      res.status(401).json({ error: "Credenciales invalidas." });
+      res.status(401).json({ error: "Credenciales inválidas." });
       return;
     }
 
     const passwordMatches = await bcrypt.compare(data.password, user.passwordHash);
 
     if (!passwordMatches) {
-      res.status(401).json({ error: "Credenciales invalidas." });
+      res.status(401).json({ error: "Credenciales inválidas." });
       return;
     }
 
@@ -182,7 +182,7 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 
   if (error instanceof z.ZodError) {
     res.status(400).json({
-      error: "Datos invalidos.",
+      error: "Datos inválidos.",
       issues: error.issues,
     });
     return;

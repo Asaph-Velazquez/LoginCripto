@@ -11,23 +11,23 @@ const flowSteps = [
   {
     id: "email" as const,
     index: "01",
-    title: "Enviaremos un codigo de verificacion a tu correo.",
+    title: "Enviaremos un código de verificación a tu correo.",
     description:
-      "Ingresa el correo asociado a tu cuenta. Te enviaremos un codigo temporal para confirmar tu identidad antes de permitir el cambio de contrasena.",
+      "Ingresa el correo asociado a tu cuenta. Te enviaremos un código temporal para confirmar tu identidad antes de permitir el cambio de contraseña.",
   },
   {
     id: "code" as const,
     index: "02",
-    title: "Confirma el codigo que enviamos a tu correo.",
+    title: "Confirma el código que enviamos a tu correo.",
     description:
-      "Introduce el codigo de 6 digitos para validar la solicitud antes de habilitar el cambio de contrasena.",
+      "Introduce el código de 6 dígitos para validar la solicitud antes de habilitar el cambio de contraseña.",
   },
   {
     id: "reset" as const,
     index: "03",
-    title: "Define una nueva contrasena segura.",
+    title: "Define una nueva contraseña segura.",
     description:
-      "Cuando el codigo sea valido, podras terminar el restablecimiento con una contrasena nueva.",
+      "Cuando el código sea válido, podrás terminar el restablecimiento con una contraseña nueva.",
   },
 ];
 
@@ -118,12 +118,12 @@ export default function PasswordRecoveryPage() {
       const payload = (await response.json()) as PasswordRecoveryRequestResponse;
 
       if (!response.ok) {
-        setRequestError(payload.error ?? "No pudimos enviar el codigo.");
+        setRequestError(payload.error ?? "No pudimos enviar el código.");
         return;
       }
 
       setInfoMessage(
-        `Enviamos un codigo de 6 digitos a ${payload.email ?? email}. Expira en ${payload.expiresInMinutes ?? 10} minutos.`,
+        `Enviamos un código de 6 dígitos a ${payload.email ?? email}. Expira en ${payload.expiresInMinutes ?? 10} minutos.`,
       );
       setIsCodeVerified(false);
       setVerificationCode("");
@@ -131,7 +131,7 @@ export default function PasswordRecoveryPage() {
       setConfirmPassword("");
       setStep("code");
     } catch {
-      setRequestError("No pudimos enviar el codigo.");
+      setRequestError("No pudimos enviar el código.");
     } finally {
       setIsSendingCode(false);
     }
@@ -143,7 +143,7 @@ export default function PasswordRecoveryPage() {
     setResetSuccessMessage("");
 
     if (verificationCode.length !== 6) {
-      setRequestError("Ingresa un codigo de 6 digitos.");
+      setRequestError("Ingresa un código de 6 dígitos.");
       return;
     }
 
@@ -165,7 +165,7 @@ export default function PasswordRecoveryPage() {
 
       if (!response.ok) {
         setIsCodeVerified(false);
-        setRequestError(payload.error ?? "No pudimos validar el codigo.");
+        setRequestError(payload.error ?? "No pudimos validar el código.");
         return;
       }
 
@@ -173,7 +173,7 @@ export default function PasswordRecoveryPage() {
       setStep("reset");
     } catch {
       setIsCodeVerified(false);
-      setRequestError("No pudimos validar el codigo.");
+      setRequestError("No pudimos validar el código.");
     } finally {
       setIsVerifyingCode(false);
     }
@@ -182,7 +182,7 @@ export default function PasswordRecoveryPage() {
   async function submitPasswordReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!isCodeVerified) {
-      setRequestError("Primero valida el codigo de verificacion.");
+      setRequestError("Primero valida el código de verificación.");
       return;
     }
 
@@ -207,17 +207,17 @@ export default function PasswordRecoveryPage() {
       const payload = (await response.json()) as PasswordResetResponse;
 
       if (!response.ok) {
-        setRequestError(payload.error ?? "No pudimos actualizar la contrasena.");
+        setRequestError(payload.error ?? "No pudimos actualizar la contraseña.");
         return;
       }
 
-      setResetSuccessMessage("Tu contrasena fue actualizada correctamente.");
+      setResetSuccessMessage("Tu contraseña fue actualizada correctamente.");
       setPassword("");
       setConfirmPassword("");
       setVerificationCode("");
       setIsCodeVerified(false);
     } catch {
-      setRequestError("No pudimos actualizar la contrasena.");
+      setRequestError("No pudimos actualizar la contraseña.");
     } finally {
       setIsResettingPassword(false);
     }
@@ -312,7 +312,7 @@ export default function PasswordRecoveryPage() {
                 textTransform: "uppercase",
               }}
             >
-              Recuperacion con verificacion
+              Recuperación con verificación
             </span>
 
             <div style={{ display: "grid", gap: "12px" }}>
@@ -362,7 +362,7 @@ export default function PasswordRecoveryPage() {
             {step === "email" ? (
               <form onSubmit={submitRecoveryEmail} style={{ display: "grid", gap: "18px" }}>
                 <label style={{ display: "grid", gap: "8px" }}>
-                  <span style={{ fontSize: "0.92rem", color: palette.muted }}>Correo electronico</span>
+                  <span style={{ fontSize: "0.92rem", color: palette.muted }}>Correo electrónico</span>
                   <input
                     type="email"
                     name="email"
@@ -377,7 +377,7 @@ export default function PasswordRecoveryPage() {
                 {requestError ? <StatusMessage message={requestError} /> : null}
 
                 <button type="submit" style={primaryButtonStyle()} disabled={isSendingCode}>
-                  {isSendingCode ? "Enviando codigo..." : "Enviar codigo de verificacion"}
+                  {isSendingCode ? "Enviando código..." : "Enviar código de verificación"}
                 </button>
               </form>
             ) : null}
@@ -395,11 +395,11 @@ export default function PasswordRecoveryPage() {
                   }}
                 >
                   {infoMessage ||
-                    "Hemos enviado un codigo de 6 digitos al correo registrado. Introducelo para continuar con el restablecimiento."}
+                    "Hemos enviado un código de 6 dígitos al correo registrado. Introdúcelo para continuar con el restablecimiento."}
                 </div>
 
                 <label style={{ display: "grid", gap: "8px" }}>
-                  <span style={{ fontSize: "0.92rem", color: palette.muted }}>Codigo de verificacion</span>
+                  <span style={{ fontSize: "0.92rem", color: palette.muted }}>Código de verificación</span>
                   <input
                     type="text"
                     name="verificationCode"
@@ -431,7 +431,7 @@ export default function PasswordRecoveryPage() {
                   }}
                 >
                   <button type="submit" style={primaryButtonStyle()} disabled={isVerifyingCode}>
-                    {isVerifyingCode ? "Validando codigo..." : "Verificar codigo"}
+                    {isVerifyingCode ? "Validando código..." : "Verificar código"}
                   </button>
                   <button
                     type="button"
@@ -444,7 +444,7 @@ export default function PasswordRecoveryPage() {
                     }}
                     style={secondaryButtonStyle(palette)}
                   >
-                    Reenviar codigo
+                    Reenviar código
                   </button>
                 </div>
               </form>
@@ -462,16 +462,16 @@ export default function PasswordRecoveryPage() {
                     lineHeight: 1.6,
                   }}
                 >
-                  Codigo validado para <strong style={{ color: palette.foreground }}>{email}</strong>.
+                  Código validado para <strong style={{ color: palette.foreground }}>{email}</strong>.
                 </div>
 
                 <label style={{ display: "grid", gap: "8px" }}>
-                  <span style={{ fontSize: "0.92rem", color: palette.muted }}>Nueva contrasena</span>
+                  <span style={{ fontSize: "0.92rem", color: palette.muted }}>Nueva contraseña</span>
                   <input
                     type="password"
                     name="password"
                     autoComplete="new-password"
-                    placeholder="Escribe tu nueva contrasena"
+                    placeholder="Escribe tu nueva contraseña"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     style={inputStyle(palette)}
@@ -480,13 +480,13 @@ export default function PasswordRecoveryPage() {
 
                 <label style={{ display: "grid", gap: "8px" }}>
                   <span style={{ fontSize: "0.92rem", color: palette.muted }}>
-                    Confirmar nueva contrasena
+                    Confirmar nueva contraseña
                   </span>
                   <input
                     type="password"
                     name="confirmPassword"
                     autoComplete="new-password"
-                    placeholder="Repite la nueva contrasena"
+                    placeholder="Repite la nueva contraseña"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     style={inputStyle(palette)}
@@ -499,7 +499,7 @@ export default function PasswordRecoveryPage() {
                 ) : null}
 
                 <button type="submit" style={primaryButtonStyle()} disabled={isResettingPassword}>
-                  {isResettingPassword ? "Actualizando contrasena..." : "Restablecer contrasena"}
+                  {isResettingPassword ? "Actualizando contraseña..." : "Restablecer contraseña"}
                 </button>
               </form>
             ) : null}
@@ -519,10 +519,10 @@ export default function PasswordRecoveryPage() {
             >
               <span>
                 {step === "email"
-                  ? "El codigo vence en 10 minutos."
+                  ? "El código vence en 10 minutos."
                   : step === "code"
-                    ? "Solo se aceptan codigos vigentes y no reutilizados."
-                    : "Usa una contrasena unica para reforzar la seguridad."}
+                    ? "Solo se aceptan códigos vigentes y no reutilizados."
+                    : "Usa una contraseña única para reforzar la seguridad."}
               </span>
               <Link href="/" style={{ color: palette.accent, fontWeight: 700 }}>
                 Volver al acceso

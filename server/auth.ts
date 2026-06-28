@@ -38,7 +38,7 @@ export const registerSchema = z
     if (!phoneNumber) {
       ctx.addIssue({
         code: "custom",
-        message: "El numero de celular es requerido.",
+        message: "El número de celular es requerido.",
         path: ["phoneNumber"],
       });
     }
@@ -68,7 +68,7 @@ export const passwordResetSchema = z
     if (data.password !== data.confirmPassword) {
       ctx.addIssue({
         code: "custom",
-        message: "Las contrasenas no coinciden.",
+        message: "Las contraseñas no coinciden.",
         path: ["confirmPassword"],
       });
     }

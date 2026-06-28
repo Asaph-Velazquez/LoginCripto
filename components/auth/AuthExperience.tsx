@@ -20,7 +20,6 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import {
-  animateAuthStage,
   animateAuthTransition,
   animateGradientPanel,
   authFormFade,
@@ -66,7 +65,7 @@ const authFields = {
       autoComplete: "family-name",
     },
     { name: "email", label: "Correo", type: "email", autoComplete: "email" },
-    { name: "phone", label: "Numero de celular", type: "tel", autoComplete: "tel" },
+    { name: "phone", label: "Número de celular", type: "tel", autoComplete: "tel" },
     {
       name: "password",
       label: "Contraseña",
@@ -101,10 +100,12 @@ export function AuthExperience() {
     isSubmitting: false,
     error: null,
   });
+  const [registerStep, setRegisterStep] = useState<"details" | "verify">("details");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const cardSlotRef = useRef<HTMLDivElement | null>(null);
-  const visualSlotRef = useRef<HTMLDivElement | null>(null);
-  const didMountStageRef = useRef(false);
   const router = useRouter();
   const paletteMode: PaletteMode = prefersDarkMode ? "dark" : "light";
 
@@ -174,19 +175,6 @@ export function AuthExperience() {
     [paletteMode],
   );
 
-  useEffect(() => {
-    if (!didMountStageRef.current) {
-      didMountStageRef.current = true;
-      return;
-    }
-
-    animateAuthStage({
-      mode: authMode,
-      cardSlot: cardSlotRef.current,
-      visualSlot: visualSlotRef.current,
-      visualItems: Array.from(visualSlotRef.current?.querySelectorAll("[data-visual-item]") ?? []),
-    });
-  }, [authMode]);
 
   async function submitAuthForm(mode: AuthMode) {
     const isLogin = mode === "login";
@@ -209,10 +197,31 @@ export function AuthExperience() {
       });
 
       const result = (await response.json().catch(() => null)) as
-        | { error?: string }
+        | {
+            error?: string;
+            verificationRequired?: boolean;
+            email?: string;
+            expiresInMinutes?: number;
+          }
         | null;
 
       if (!response.ok) {
+        if (result?.verificationRequired && result.email) {
+          setVerificationEmail(result.email);
+          setVerificationCode("");
+          setRegisterStep("verify");
+
+          if (isLogin) {
+            setVerificationMessage(
+              "Tu cuenta sigue pendiente. Reenvía el código para completar la verificación.",
+            );
+            setLoginState({ isSubmitting: false, error: null });
+            setRegisterState({ isSubmitting: false, error: null });
+            setAuthMode("register");
+            return;
+          }
+        }
+
         setState({
           isSubmitting: false,
           error: result?.error ?? "No se pudo completar la solicitud.",
@@ -225,12 +234,15 @@ export function AuthExperience() {
         error: null,
       });
 
-      if (!isLogin) {
-        setLoginValues({
-          email: registerValues.email,
-          password: "",
-        });
-        setRegisterValues(initialRegisterValues);
+      if (!isLogin && result?.verificationRequired) {
+        const email = result.email ?? registerValues.email;
+        setVerificationEmail(email);
+        setVerificationCode("");
+        setVerificationMessage(
+          `Enviamos un código de 6 dígitos a ${email}. Expira en ${result.expiresInMinutes ?? 10} minutos.`,
+        );
+        setRegisterStep("verify");
+        return;
       }
 
       startTransition(() => {
@@ -242,6 +254,93 @@ export function AuthExperience() {
         isSubmitting: false,
         error: "No se pudo conectar con el servidor.",
       });
+    }
+  }
+
+  async function submitRegistrationVerification() {
+    if (verificationCode.length !== 6) {
+      setRegisterState({
+        isSubmitting: false,
+        error: "Ingresa un código de 6 dígitos.",
+      });
+      return;
+    }
+
+    setRegisterState({ isSubmitting: true, error: null });
+
+    try {
+      const response = await fetch("/api/auth/register/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: verificationEmail,
+          verificationCode,
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        setRegisterState({
+          isSubmitting: false,
+          error: result?.error ?? "No pudimos verificar el correo.",
+        });
+        return;
+      }
+
+      setRegisterState({ isSubmitting: false, error: null });
+      setLoginValues({ email: verificationEmail, password: "" });
+      setRegisterValues(initialRegisterValues);
+      setRegisterStep("details");
+      setVerificationCode("");
+      setVerificationMessage("");
+
+      startTransition(() => {
+        router.push("/inicio");
+        router.refresh();
+      });
+    } catch {
+      setRegisterState({
+        isSubmitting: false,
+        error: "No se pudo conectar con el servidor.",
+      });
+    }
+  }
+
+  async function resendRegistrationVerificationCode() {
+    setIsResendingVerification(true);
+    setRegisterState((current) => ({ ...current, error: null }));
+
+    try {
+      const response = await fetch("/api/auth/register/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verificationEmail }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string; expiresInMinutes?: number }
+        | null;
+
+      if (!response.ok) {
+        setRegisterState({
+          isSubmitting: false,
+          error: result?.error ?? "No pudimos reenviar el código.",
+        });
+        return;
+      }
+
+      setVerificationCode("");
+      setVerificationMessage(
+        `Enviamos un código nuevo a ${verificationEmail}. Expira en ${result?.expiresInMinutes ?? 10} minutos.`,
+      );
+    } catch {
+      setRegisterState({
+        isSubmitting: false,
+        error: "No se pudo conectar con el servidor.",
+      });
+    } finally {
+      setIsResendingVerification(false);
     }
   }
 
@@ -309,12 +408,11 @@ export function AuthExperience() {
             }}
           >
             <Box
-              ref={visualSlotRef}
               sx={{
                 ...authStageSlot("visual"),
                 transform: {
                   xs: "none",
-                  md: "translateX(100%)",
+                  md: authMode === "login" ? "translateX(100%)" : "translateX(0%)",
                 },
               }}
             >
@@ -322,12 +420,11 @@ export function AuthExperience() {
             </Box>
 
             <Box
-              ref={cardSlotRef}
               sx={{
                 ...authStageSlot("card"),
                 transform: {
                   xs: "none",
-                  md: "translateX(0%)",
+                  md: authMode === "login" ? "translateX(0%)" : "translateX(100%)",
                 },
               }}
             >
@@ -342,6 +439,17 @@ export function AuthExperience() {
                 onLoginChange={updateLoginValue}
                 onRegisterChange={updateRegisterValue}
                 onSubmit={submitAuthForm}
+                registerStep={registerStep}
+                verificationEmail={verificationEmail}
+                verificationCode={verificationCode}
+                verificationMessage={verificationMessage}
+                isResendingVerification={isResendingVerification}
+                onVerificationCodeChange={(value) => {
+                  setVerificationCode(value.replace(/\D/g, "").slice(0, 6));
+                  setRegisterState((current) => ({ ...current, error: null }));
+                }}
+                onVerifyRegistration={submitRegistrationVerification}
+                onResendVerification={resendRegistrationVerificationCode}
               />
             </Box>
           </Box>
@@ -516,6 +624,14 @@ function AuthPanel({
   onLoginChange,
   onRegisterChange,
   onSubmit,
+  registerStep,
+  verificationEmail,
+  verificationCode,
+  verificationMessage,
+  isResendingVerification,
+  onVerificationCodeChange,
+  onVerifyRegistration,
+  onResendVerification,
 }: {
   authMode: AuthMode;
   paletteMode: PaletteMode;
@@ -527,6 +643,14 @@ function AuthPanel({
   onLoginChange: (field: keyof LoginValues, value: string) => void;
   onRegisterChange: (field: keyof RegisterValues, value: string) => void;
   onSubmit: (mode: AuthMode) => Promise<void>;
+  registerStep: "details" | "verify";
+  verificationEmail: string;
+  verificationCode: string;
+  verificationMessage: string;
+  isResendingVerification: boolean;
+  onVerificationCodeChange: (value: string) => void;
+  onVerifyRegistration: () => Promise<void>;
+  onResendVerification: () => Promise<void>;
 }) {
   const isLogin = authMode === "login";
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -572,7 +696,7 @@ function AuthPanel({
         >
           <Box>
             <Typography variant="h2" sx={{ fontSize: 28 }}>
-              {isLogin ? "Iniciar sesion" : "Crear cuenta"}
+              {isLogin ? "Iniciar sesión" : "Crear cuenta"}
             </Typography>
             <Typography sx={{ color: "text.secondary", mt: 0.5 }}>
               {isLogin ? "Accede con tus credenciales." : "Registra tus datos principales."}
@@ -626,6 +750,14 @@ function AuthPanel({
                 submitState={registerState}
                 onChange={onRegisterChange}
                 onSubmit={onSubmit}
+                registerStep={registerStep}
+                verificationEmail={verificationEmail}
+                verificationCode={verificationCode}
+                verificationMessage={verificationMessage}
+                isResendingVerification={isResendingVerification}
+                onVerificationCodeChange={onVerificationCodeChange}
+                onVerifyRegistration={onVerifyRegistration}
+                onResendVerification={onResendVerification}
               />
             </Box>
           </Box>
@@ -652,11 +784,88 @@ type AuthFormProps =
       submitState: SubmitState;
       onChange: (field: keyof RegisterValues, value: string) => void;
       onSubmit: (mode: AuthMode) => Promise<void>;
+      registerStep: "details" | "verify";
+      verificationEmail: string;
+      verificationCode: string;
+      verificationMessage: string;
+      isResendingVerification: boolean;
+      onVerificationCodeChange: (value: string) => void;
+      onVerifyRegistration: () => Promise<void>;
+      onResendVerification: () => Promise<void>;
       ref: React.Ref<HTMLDivElement>;
     };
 
-function AuthForm({ authMode, active, ref, values, submitState, onChange, onSubmit }: AuthFormProps) {
+function AuthForm(props: AuthFormProps) {
+  const { authMode, active, ref, values, submitState, onChange, onSubmit } = props;
   const isLogin = authMode === "login";
+
+  if (!isLogin && props.registerStep === "verify") {
+    return (
+      <Box
+        ref={ref}
+        component="form"
+        aria-hidden={!active}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void props.onVerifyRegistration();
+        }}
+        sx={authFormFade(active)}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.25 }}>
+          <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+            {props.verificationMessage ||
+              `Ingresa el código enviado a ${props.verificationEmail} para activar tu cuenta.`}
+          </Typography>
+
+          <TextField
+            required
+            autoFocus
+            name="verificationCode"
+            label="Código de verificación"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={props.verificationCode}
+            onChange={(event) => props.onVerificationCodeChange(event.target.value)}
+            slotProps={{
+              htmlInput: {
+                maxLength: 6,
+                style: {
+                  textAlign: "center",
+                  letterSpacing: "0.35em",
+                  fontWeight: 700,
+                },
+              },
+            }}
+          />
+
+          {submitState.error ? (
+            <Typography sx={{ color: "#ff8f8f", fontSize: 13 }}>
+              {submitState.error}
+            </Typography>
+          ) : null}
+
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={submitState.isSubmitting}
+          >
+            {submitState.isSubmitting ? "Verificando..." : "Verificar correo"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="text"
+            disabled={props.isResendingVerification}
+            onClick={() => void props.onResendVerification()}
+          >
+            {props.isResendingVerification ? "Reenviando..." : "Reenviar código"}
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
   const fields = authFields[authMode];
 
   return (
@@ -670,9 +879,7 @@ function AuthForm({ authMode, active, ref, values, submitState, onChange, onSubm
         event.preventDefault();
         void onSubmit(authMode);
       }}
-      sx={{
-        ...authFormFade(active),
-      }}
+      sx={authFormFade(active)}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2.25 }}>
         {fields.map((field) => (
@@ -685,13 +892,18 @@ function AuthForm({ authMode, active, ref, values, submitState, onChange, onSubm
             autoComplete={field.autoComplete}
             value={values[field.name as keyof typeof values] ?? ""}
             onChange={(event) =>
-              onChange(field.name as keyof LoginValues & keyof RegisterValues, event.target.value)
+              onChange(
+                field.name as keyof LoginValues & keyof RegisterValues,
+                event.target.value,
+              )
             }
             slotProps={
               field.name === "phone"
                 ? {
                     input: {
-                      startAdornment: <InputAdornment position="start">+52</InputAdornment>,
+                      startAdornment: (
+                        <InputAdornment position="start">+52</InputAdornment>
+                      ),
                     },
                   }
                 : undefined
@@ -700,7 +912,9 @@ function AuthForm({ authMode, active, ref, values, submitState, onChange, onSubm
         ))}
 
         {submitState.error ? (
-          <Typography sx={{ color: "#ff8f8f", fontSize: 13 }}>{submitState.error}</Typography>
+          <Typography sx={{ color: "#ff8f8f", fontSize: 13 }}>
+            {submitState.error}
+          </Typography>
         ) : null}
 
         {isLogin && (
@@ -713,18 +927,34 @@ function AuthForm({ authMode, active, ref, values, submitState, onChange, onSubm
             }}
           >
             <FormControlLabel control={<Switch size="small" />} label="Recordarme" />
-            <Button component={Link} href="/recuperar-contrasena" variant="text" sx={{ px: 0 }}>
+            <Button
+              component={Link}
+              href="/recuperar-contrasena"
+              variant="text"
+              sx={{ px: 0 }}
+            >
               Olvide mi contraseña
             </Button>
           </Box>
         )}
 
-        <Button type="submit" variant="contained" size="large" disabled={submitState.isSubmitting}>
-          {submitState.isSubmitting ? (isLogin ? "Entrando..." : "Registrando...") : isLogin ? "Entrar" : "Registrarme"}
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={submitState.isSubmitting}
+        >
+          {submitState.isSubmitting
+            ? isLogin
+              ? "Entrando..."
+              : "Registrando..."
+            : isLogin
+              ? "Entrar"
+              : "Registrarme"}
         </Button>
 
         <Typography sx={{ color: "text.secondary", fontSize: 13, textAlign: "center" }}>
-          Al continuar aceptas la verificacion de seguridad de la plataforma.
+          Al continuar aceptas la verificación de seguridad de la plataforma.
         </Typography>
       </Box>
     </Box>

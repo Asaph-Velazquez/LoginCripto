@@ -34,8 +34,8 @@ export async function POST(request: Request) {
         {
           error:
             consumedCode.reason === "expired"
-              ? "El codigo ya expiro o no existe una solicitud activa."
-              : "El codigo de verificacion es incorrecto.",
+              ? "El código ya expiró o no existe una solicitud activa."
+              : "El código de verificación es incorrecto.",
         },
         { status: 400 },
       );
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
-          error: "Datos invalidos.",
+          error: "Datos inválidos.",
           issues: error.issues,
         },
         { status: 400 },
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     console.error(error);
 
     return NextResponse.json(
-      { error: "No pudimos actualizar la contrasena." },
+      { error: "No pudimos actualizar la contraseña." },
       { status: 500 },
     );
   }
