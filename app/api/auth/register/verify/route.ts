@@ -2,27 +2,26 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
-  parsePasswordRecoveryCodeVerification,
-  verifyPasswordRecoveryCode,
-} from "@/server/password-recovery";
+  parseEmailVerification,
+  verifyAndConsumeEmailVerificationCode,
+} from "@/server/email-verification";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const data = parsePasswordRecoveryCodeVerification(body);
-    const verifiedCode = await verifyPasswordRecoveryCode(
+    const data = parseEmailVerification(await request.json());
+    const result = await verifyAndConsumeEmailVerificationCode(
       data.email,
       data.verificationCode,
     );
 
-    if (!verifiedCode.ok) {
+    if (!result.ok) {
       return NextResponse.json(
         {
           error:
-            verifiedCode.reason === "expired"
-              ? "El código ya expiró o no existe una solicitud activa."
+            result.reason === "expired"
+              ? "El código expiró o no existe una verificación activa."
               : "El código de verificación es incorrecto.",
         },
         { status: 400 },
@@ -33,18 +32,14 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        {
-          error: "Datos inválidos.",
-          issues: error.issues,
-        },
+        { error: "Datos inválidos.", issues: error.issues },
         { status: 400 },
       );
     }
 
     console.error(error);
-
     return NextResponse.json(
-      { error: "No pudimos validar el código de verificación." },
+      { error: "No pudimos verificar el correo." },
       { status: 500 },
     );
   }

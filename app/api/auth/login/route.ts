@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Credenciales invalidas." },
+        { error: "Credenciales inválidas." },
         { status: 401 },
       );
     }
@@ -26,8 +26,19 @@ export async function POST(request: Request) {
 
     if (!passwordMatches) {
       return NextResponse.json(
-        { error: "Credenciales invalidas." },
+        { error: "Credenciales inválidas." },
         { status: 401 },
+      );
+    }
+
+    if (!user.emailVerifiedAt) {
+      return NextResponse.json(
+        {
+          error: "Debes verificar tu correo antes de iniciar sesión.",
+          verificationRequired: true,
+          email: user.email,
+        },
+        { status: 403 },
       );
     }
 
@@ -35,10 +46,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        {
-          error: "Datos invalidos.",
-          issues: error.issues,
-        },
+        { error: "Datos inválidos.", issues: error.issues },
         { status: 400 },
       );
     }
