@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     if (!issuedCode.ok) {
       return NextResponse.json(
         {
-          error: `Espera ${issuedCode.retryAfterSeconds} segundos antes de solicitar otro codigo.`,
+          error: `Espera ${issuedCode.retryAfterSeconds} segundos antes de solicitar otro código.`,
         },
         {
           status: 429,
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
-          error: "Datos invalidos.",
+          error: "Datos inválidos.",
           issues: error.issues,
         },
         { status: 400 },
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     if (error instanceof EmailDeliveryError) {
       return NextResponse.json(
         {
-          error: "No pudimos enviar el correo de verificacion.",
+          error: "No pudimos enviar el correo de verificación.",
           details:
             process.env.NODE_ENV === "production" ? undefined : error.message,
         },
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: "No pudimos enviar el correo de verificacion.",
+        error: "No pudimos enviar el correo de verificación.",
         details:
           process.env.NODE_ENV === "production"
             ? undefined

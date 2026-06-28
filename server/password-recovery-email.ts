@@ -29,11 +29,11 @@ export function createPasswordRecoveryEmailHtml(code: string) {
   <meta name="x-apple-disable-message-reformatting">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
-  <title>Recuperacion de contrasena</title>
+  <title>Recuperación de contraseña</title>
 </head>
 <body style="margin:0;width:100%;padding:0;background-color:#07111f;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;word-break:break-word;color:#eef7ff;">
-  <div style="display:none;">Usa este codigo de 6 digitos para recuperar tu contrasena.</div>
-  <div role="article" aria-roledescription="email" aria-label="Recuperacion de contrasena" lang="es" style="background-color:#07111f;padding:40px 16px;">
+  <div style="display:none;">Usa este código de 6 dígitos para recuperar tu contraseña.</div>
+  <div role="article" aria-roledescription="email" aria-label="Recuperación de contraseña" lang="es" style="background-color:#07111f;padding:40px 16px;">
     <table align="center" style="margin:0 auto;width:100%;max-width:640px;" cellpadding="0" cellspacing="0" role="none">
       <tr>
         <td>
@@ -55,12 +55,12 @@ export function createPasswordRecoveryEmailHtml(code: string) {
                   </tr>
                   <tr>
                     <td style="padding-bottom:16px;font-size:32px;font-weight:700;line-height:1.1;color:#eef7ff;">
-                      Recupera tu contrasena con un codigo de verificacion
+                      Recupera tu contraseña con un código de verificación
                     </td>
                   </tr>
                   <tr>
                     <td style="padding-bottom:24px;font-size:16px;line-height:26px;color:#9fb7d0;">
-                      Recibimos una solicitud para restablecer la contrasena de tu cuenta. Ingresa este codigo de 6 digitos en la pantalla de recuperacion para continuar.
+                      Recibimos una solicitud para restablecer la contraseña de tu cuenta. Ingresa este código de 6 dígitos en la pantalla de recuperación para continuar.
                     </td>
                   </tr>
                   <tr>
@@ -68,9 +68,9 @@ export function createPasswordRecoveryEmailHtml(code: string) {
                       <table style="width:100%;border-radius:16px;border:1px solid #25415f;background-color:#091524;" cellpadding="0" cellspacing="0" role="none">
                         <tr>
                           <td style="padding:28px 24px;text-align:center;">
-                            <div style="padding-bottom:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.28em;color:#37d5ff;">Codigo de verificacion</div>
+                            <div style="padding-bottom:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.28em;color:#37d5ff;">Código de verificación</div>
                             <div style="font-size:38px;font-weight:700;letter-spacing:.42em;color:#eef7ff;">${safeCode}</div>
-                            <div style="padding-top:12px;font-size:13px;line-height:20px;color:#9fb7d0;">Este codigo expira en ${passwordRecoveryTtlMinutes} minutos.</div>
+                            <div style="padding-top:12px;font-size:13px;line-height:20px;color:#9fb7d0;">Este código expira en ${passwordRecoveryTtlMinutes} minutos.</div>
                           </td>
                         </tr>
                       </table>
@@ -78,12 +78,12 @@ export function createPasswordRecoveryEmailHtml(code: string) {
                   </tr>
                   <tr>
                     <td style="padding-bottom:16px;font-size:14px;line-height:22px;color:#9fb7d0;">
-                      Si no solicitaste este cambio, puedes ignorar este correo. Tu contrasena actual seguira siendo valida mientras no completes el proceso.
+                      Si no solicitaste este cambio, puedes ignorar este correo. Tu contraseña actual seguirá siendo válida mientras no completes el proceso.
                     </td>
                   </tr>
                   <tr>
                     <td style="font-size:14px;line-height:22px;color:#9fb7d0;">
-                      Por seguridad, no compartas este codigo con nadie y evita reenviar este mensaje.
+                      Por seguridad, no compartas este código con nadie y evita reenviar este mensaje.
                     </td>
                   </tr>
                 </table>
@@ -108,7 +108,7 @@ export function createPasswordRecoveryEmailHtml(code: string) {
 }
 
 export function createPasswordRecoveryEmailSubject() {
-  return "Codigo de verificacion para recuperar tu contrasena";
+  return "Código de verificación para recuperar tu contraseña";
 }
 
 export function createPasswordRecoveryEmailAttachments() {
